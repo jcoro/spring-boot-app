@@ -3,6 +3,8 @@ plugins {
     id 'org.springframework.boot' version '3.0.4'
     id 'io.spring.dependency-management' version '1.1.0'
     id 'pl.allegro.tech.build.axion-release' version '1.14.3'
+    id 'com.palantir.docker' version '0.34.0'
+    id 'com.palantir.docker-run' version '0.34.0'
 }
 
 scmVersion {
@@ -38,6 +40,18 @@ test {
     useJUnitPlatform()
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+String dockerHubUsernameProperty = findProperty('dockerHubUsername') ?: 'jcoronite'
+String imageName = "${dockerHubUsernameProperty}/spring-boot-app:$version"
+
+docker {
+    name imageName
+    files "build/libs/${bootJar.archiveFileName.get()}"
+    buildArgs([JAR_FILE: bootJar.archiveFileName.get()])
+}
+
+dockerRun {
+    name project.name
+    image imageName
+    ports '8080:8080'
+    clean true
 }
